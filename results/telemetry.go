@@ -203,6 +203,29 @@ func Record(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func RenderJSON(w http.ResponseWriter, r *http.Request) {
+	uuid := r.FormValue("id")
+	record, err := database.DB.FetchByUUID(uuid)
+	if err != nil {
+		log.Errorf("Error querying database: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var result Result
+	if err := json.Unmarshal([]byte(record.ISPInfo), &result); err != nil {
+		log.Errorf("Error parsing ISP info: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	enc.Encode(result)
+	return
+}
+
 func DrawPNG(w http.ResponseWriter, r *http.Request) {
 	uuid := r.FormValue("id")
 	record, err := database.DB.FetchByUUID(uuid)
